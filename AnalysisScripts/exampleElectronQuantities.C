@@ -8,7 +8,13 @@
 
 #include <vector>
 
-const TString fileName = "/home/hep/ikrav/work/ntuples/CSA14/DYJetsToLL_PU20bx25_event_structure_v3.root";
+//const TString fileName = "/uscms_data/d2/ikrav/ntuples/CSA14/output_DY.root";
+//const TString fileName = "output_DY.root";
+//const TString fileName = "output_GJ.root";
+//const TString fileName = "output_TT.root";
+//const TString fileName = "DYJetsToLL_PU20bx25_event_structure_v4.root";
+const TString fileName = "TTJets_PU20bx25_event_structure_v2.root";
+//"/home/hep/ikrav/work/ntuples/CSA14/DYJetsToLL_PU20bx25_event_structure_v3.root";
 const TString treeName = "ntupler/ElectronTree";
 
 const bool verbose = false;
@@ -31,15 +37,6 @@ void exampleElectronQuantities(){
   // add it, somehow the vector header was not loaded automatically there.
   gROOT->ProcessLine("#include <vector>"); 
 
-  // Book histograms for interesting variables
-  TH1F *hPt = new TH1F("hPt","",100, 0, 200);
-  TH1F *hEta = new TH1F("hEta","",100,-3, 3);
-  TH1F *h5x5See_barrel = new TH1F("h5x5See_barrel", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta
-  TH1F *h5x5See_endcap = new TH1F("h5x5See_endcap", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta
-
-  //
-  // Open a file and find the tree with electron data
-  //
   TFile *file = new TFile(fileName);
   if( !file ){
     printf("Failed to open file %s\n", fileName.Data() );
@@ -50,6 +47,29 @@ void exampleElectronQuantities(){
     printf("Failed to find the tree %s\n", treeName.Data() );
     assert(0);
   }
+
+  /*
+
+  // Book histograms for interesting variables
+  TFile* histFile = new TFile("hist_"+fileName,"RECREATE");
+  TH1F *hPt = new TH1F("hPt","",100, 0, 200);
+  TH1F *hEta = new TH1F("hEta","",100,-3, 3);
+  TH1F *h5x5See_barrel = new TH1F("h5x5See_barrel", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta
+  TH1F *h5x5See_endcap = new TH1F("h5x5See_endcap", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta
+  */
+  //
+  // Open a file and find the tree with electron data
+  //
+  //  TFile *file = new TFile(fileName);
+  //  if( !file ){
+  //  printf("Failed to open file %s\n", fileName.Data() );
+  //  assert(0);
+  //  }
+  // TTree *tree = (TTree*)file->Get(treeName);
+  // if( !tree ){
+  //  printf("Failed to find the tree %s\n", treeName.Data() );
+  //  assert(0);
+  // }
 
   // 
   // Configure reading the information of interest from the TTree,
@@ -112,9 +132,22 @@ void exampleElectronQuantities(){
   // ... add here setting more branch addresses if needed
   //
 
+
+  // Book histograms for interesting variables                                                                                                                                              
+  TFile* histFile = new TFile("hist_"+fileName,"RECREATE");
+  TH1F *hPt = new TH1F("hPt","",100, 0, 200);
+  TH1F *hEta = new TH1F("hEta","",100,-3, 3);
+  TH1F *h5x5See_barrel = new TH1F("h5x5See_barrel", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta                                                                                         
+  TH1F *h5x5See_endcap = new TH1F("h5x5See_endcap", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta                                                                                          
+
+
+
+
+
   // 
   // Loop over events
   //
+
   UInt_t maxEvents = tree->GetEntries();
   if( smallEventCount )
     maxEvents = 1000;
@@ -149,15 +182,17 @@ void exampleElectronQuantities(){
       
       // In this example, work only with reconstructed electrons matched
       // to true prompt electrons in MC
-      if( eleIsTrueElectron->at(iele) != ELECTRON_TRUE_PROMPT )
-	continue;
-      
+//      if( eleIsTrueElectron->at(iele) != ELECTRON_TRUE_PROMPT )
+//	continue;
+
+           if(!(( eleIsTrueElectron->at(iele) ==0) || (eleIsTrueElectron->at(iele) ==3)))continue;
       // Fill histograms
       hPt->Fill( elePt->at(iele) );
       hEta->Fill( eleEtaSC->at(iele) );
 
       bool isBarrel = fabs( eleEtaSC->at(iele) ) < boundaryBarrelEndcap ? true : false; 
-      if( isBarrel ) {
+   
+   if( isBarrel ) {
       	h5x5See_barrel->Fill( eleFull5x5SigmaIEtaIEta->at(iele) );
       }else{
       	h5x5See_endcap->Fill( eleFull5x5SigmaIEtaIEta->at(iele) );
@@ -169,6 +204,7 @@ void exampleElectronQuantities(){
 					       
   // Final clean-up, as recommended by ROOT tutorials
   tree->ResetBranchAddresses();
+  
 
   file->Close();
   delete file;
@@ -201,7 +237,8 @@ void exampleElectronQuantities(){
   comment4->SetNDC(kTRUE);
   comment4->Draw("same");
 
-
+  histFile->Write();
+  histFile->Close();
 }
 
 // Set a few histogram attributes
