@@ -87,7 +87,6 @@ void plotRoc(TString sigFileNam, TString bkgFileNam, TString varHist,
   tempSig->Draw();
   tempBkg->Draw("sames");
   tempSig->SetLineColor(kRed);
-  c2->Print(varHist+".pdf");
   leg = new TLegend(0.6336207,0.6525424,0.8965517,0.8771186,NULL,"brNDC"); //coordinates are fractions
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
@@ -96,6 +95,7 @@ void plotRoc(TString sigFileNam, TString bkgFileNam, TString varHist,
   leg->AddEntry(tempSig,"Signal");
   leg->AddEntry(tempBkg,"Background");
   leg->Draw();
+  c2->Print(varHist+".pdf");
 
 
 }
