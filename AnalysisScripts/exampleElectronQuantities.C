@@ -13,6 +13,24 @@
 //const TString fileName = "output_GJ.root";
 //const TString fileName = "output_TT.root";
 //const TString fileName = "DYJetsToLL_PU20bx25_event_structure_v4.root";
+const float cutIsoBarrel = 0.3313 ;
+const float cutSeeBarrel = 0.0125;
+const float cutsDEtaBarrel = 0.02;
+const float cutsDPhiBarrel = 0.2579;
+
+const float cutIsoEndcap = 0.3816;
+const float cutSeeEndcap = 0.0371;
+const float cutsDEtaEndcap = 0.0141;
+const float cutsDPhiEndcap = 0.2591;
+
+// Forward declarations
+// void setHistogramAttributes(TH1F *hist, TString XTitle);
+bool passIso(float iso, bool isEB);
+bool passSee(float sigmaieie, bool isEB);
+bool passDEta(float deta, bool isEB);
+bool passDPhi(float dphi, bool isEB);
+//
+//
 const TString fileName = "TTJets_PU20bx25_event_structure_v2.root";
 
 
@@ -270,5 +288,38 @@ void setHistogramAttributes(TH1F *hist, TString XTitle){
   hist->SetStats(0);
 
   return;
+}
+
+
+bool passIso(float iso, bool isEB){
+  float cutIso;
+  cutIso = cutIsoBarrel;
+  if (!isEB){cutIso = cutIsoEndcap;}
+  if (iso < cutIso) return true;
+  else return false;
+}
+
+bool passSee(float sigmaieie, bool isEB){
+  float cutSee;
+  cutSee = cutSeeBarrel;
+  if (!isEB){cutSee = cutSeeEndcap;}
+  if (sigmaieie < cutSee ) return true;
+  else return false;
+}
+
+bool passDEta(float deta, bool isEB){
+  float cutDEta;
+  cutDEta = cutsDEtaBarrel;
+  if (!isEB){cutDEta = cutsDEtaEndcap;}
+  if (fabs(deta) < cutDEta ) return true;
+  else return false;
+}
+
+bool passDPhi(float dphi, bool isEB){
+  float cutDPhi;
+  cutDPhi = cutsDPhiBarrel;
+  if (!isEB){cutDPhi = cutsDPhiEndcap;}
+  if (fabs(dphi) < cutDPhi ) return true;
+  else return false;
 }
 
