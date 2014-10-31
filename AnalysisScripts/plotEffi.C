@@ -27,11 +27,13 @@ void plotEffi(TString sigFileNam, TString asFnt,
   TH1D* hSigFnt = sigFile->Get(asFnt+"_iso");
 
   hSigFnt->Divide(hSigVar);
+  hSigFnt->GetXaxis()->SetTitle("p_{T}");
+  hSigFnt->SetTitle("Relative Isolation < 0.1");
 
   TCanvas* c = new TCanvas("c", "ROC", 500, 500);
   c->cd();
-  gPad->SetGrid();
-  gPad->SetLogy(1);
+  c->SetGrid();
+  //gPad->SetLogy(1);
   
   hSigFnt->Draw();
 
