@@ -14,6 +14,8 @@
 //const TString fileName = "output_TT.root";
 //const TString fileName = "DYJetsToLL_PU20bx25_event_structure_v4.root";
 const TString fileName = "TTJets_PU20bx25_event_structure_v2.root";
+
+
 //"/home/hep/ikrav/work/ntuples/CSA14/DYJetsToLL_PU20bx25_event_structure_v3.root";
 const TString treeName = "ntupler/ElectronTree";
 
@@ -84,7 +86,7 @@ void exampleElectronQuantities(){
   // Declare variables (uncomment as needed! )
   //
   // Event-level variables:
-  // int nPV;                    // number of reconstructed PVs
+  int nPV;                    // number of reconstructed PVs
   int nEle; // the number of reconstructed electrons in the event
   // Per-eletron variables
   // Kinematics
@@ -105,7 +107,7 @@ void exampleElectronQuantities(){
   // std::vector <float> *eleIsoNeutralHadrons = 0;  // total neutral hadron energy in the cone
   // std::vector <float> *eleIsoPhotons = 0;         // total photon energy in the cone
   // std::vector <float> *eleIsoChargedFromPU = 0;   // total charged not from the main PV
-  // std::vector <float> *eleRelIsoWithDBeta = 0;    // pre-computed (ch+max(0.0,nh+pho-0.5*chPU)/pt from above
+  std::vector <float> *eleRelIsoWithDBeta = 0;    // pre-computed (ch+max(0.0,nh+pho-0.5*chPU)/pt from above
   // Conversion rejection
   // std::vector <float> *eleExpectedMissingInnerHits = 0;
   // std::vector <float> *elePassConversionVeto = 0;
@@ -113,21 +115,25 @@ void exampleElectronQuantities(){
   std::vector <int> *eleIsTrueElectron = 0;    // 0-unmatched, 1-true prompt, 2-true from tau, 3-true non-prompt
   
   // Declare branches
+  TBranch *b_nPV = 0;
   TBranch *b_nEle = 0;
   TBranch *b_elePt = 0;
   TBranch *b_eleEtaSC = 0;
   TBranch *b_eleFull5x5SigmaIEtaIEta = 0;
   TBranch *b_eleIsTrueElectron = 0;
+  TBranch *b_eleRelIsoWithDBeta =0;
   //
   // .... add here more branch declarations that mirror the variables above.
   //
 
   // Connect variables and branches to the tree with the data
+  tree->SetBranchAddress("nPV", &nPV, &b_nPV);
   tree->SetBranchAddress("nEle", &nEle, &b_nEle);
   tree->SetBranchAddress("pt", &elePt, &b_elePt);
   tree->SetBranchAddress("etaSC", &eleEtaSC, &b_eleEtaSC);
   tree->SetBranchAddress("full5x5_sigmaIetaIeta", &eleFull5x5SigmaIEtaIEta, &b_eleFull5x5SigmaIEtaIEta);
   tree->SetBranchAddress("isTrueElectron", &eleIsTrueElectron, &b_eleIsTrueElectron);
+  tree->SetBranchAddress("relIsoWithDBeta", &eleRelIsoWithDBeta, &b_eleRelIsoWithDBeta);
   //
   // ... add here setting more branch addresses if needed
   //
@@ -137,11 +143,13 @@ void exampleElectronQuantities(){
   TFile* histFile = new TFile("hist_"+fileName,"RECREATE");
   TH1F *hPt = new TH1F("hPt","",100, 0, 200);
   TH1F *hEta = new TH1F("hEta","",100,-3, 3);
-  TH1F *h5x5See_barrel = new TH1F("h5x5See_barrel", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta                                                                                         
-  TH1F *h5x5See_endcap = new TH1F("h5x5See_endcap", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta                                                                                          
-
-
-
+  TH1F *h5x5See_barrel = new TH1F("h5x5See_barrel", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta       
+  TH1F *h5x5See_endcap = new TH1F("h5x5See_endcap", "", 100, 0, 0.05); // Full 5x5 sigma_ieta_ieta       
+  TH1F *hrelIsoWithDBeta_barrel = new TH1F("relIsoWithDBeta_barrel", "", 150, 0, 3); // Full 5x5 sigma_ieta_ieta       
+  TH1F *hrelIsoWithDBeta_endcap = new TH1F("relIsoWithDBeta_endcap", "", 150, 0, 3); // Full 5x5 sigma_ieta_ieta        
+  TH1F *hPt_iso = new TH1F("hPt_iso","",100, 0, 200);
+  TH1F *hnPV = new TH1F("hnPV","",50, 0, 50);
+  TH1F *hnPV_iso = new TH1F("hnPV_iso","",50, 0, 50);
 
 
   // 
@@ -171,6 +179,9 @@ void exampleElectronQuantities(){
     b_eleEtaSC->GetEntry(tentry);
     b_eleFull5x5SigmaIEtaIEta->GetEntry(tentry);
     b_eleIsTrueElectron->GetEntry(tentry);
+    b_eleRelIsoWithDBeta->GetEntry(tentry);
+    b_nPV->GetEntry(tentry);
+
     //
     // ...add more get entries for other branches as needed ...
     //
@@ -182,29 +193,33 @@ void exampleElectronQuantities(){
       
       // In this example, work only with reconstructed electrons matched
       // to true prompt electrons in MC
-//      if( eleIsTrueElectron->at(iele) != ELECTRON_TRUE_PROMPT )
-//	continue;
-
-           if(!(( eleIsTrueElectron->at(iele) ==0) || (eleIsTrueElectron->at(iele) ==3)))continue;
+//     if( eleIsTrueElectron->at(iele) != ELECTRON_TRUE_PROMPT )	continue;
+         if(!(( eleIsTrueElectron->at(iele) ==0) || (eleIsTrueElectron->at(iele) ==3)))continue;
       // Fill histograms
       hPt->Fill( elePt->at(iele) );
       hEta->Fill( eleEtaSC->at(iele) );
-
+      hnPV->Fill(nPV);
+ 
       bool isBarrel = fabs( eleEtaSC->at(iele) ) < boundaryBarrelEndcap ? true : false; 
    
-   if( isBarrel ) {
+     if( isBarrel ) {
       	h5x5See_barrel->Fill( eleFull5x5SigmaIEtaIEta->at(iele) );
+        hrelIsoWithDBeta_barrel->Fill(eleRelIsoWithDBeta->at(iele));
       }else{
       	h5x5See_endcap->Fill( eleFull5x5SigmaIEtaIEta->at(iele) );
+        hrelIsoWithDBeta_endcap->Fill(eleRelIsoWithDBeta->at(iele));
       }
-
+    if(eleRelIsoWithDBeta->at(iele)<0.1){
+	hPt_iso->Fill( elePt->at(iele) );
+        hnPV_iso->Fill(nPV);
+      }
     } // end loop over electrons
-  
+ 
   } // end loop over events
 					       
   // Final clean-up, as recommended by ROOT tutorials
   tree->ResetBranchAddresses();
-  
+ 
 
   file->Close();
   delete file;
