@@ -26,6 +26,7 @@ Implementation:
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Photon.h"
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "DataFormats/Common/interface/ValueMap.h"
 #include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
@@ -64,9 +65,12 @@ void printAllZeroMothers(const reco::Candidate *particle);
 edm::EDGetTokenT<reco::VertexCollection> vtxToken_;
 edm::EDGetTokenT<edm::View<PileupSummaryInfo> > pileupToken_;
 edm::EDGetTokenT<pat::ElectronCollection> electronToken_;
+edm::EDGetTokenT<pat::PhotonCollection> photonToken_;
 edm::EDGetTokenT<edm::View<reco::GenParticle> > prunedGenToken_;
 edm::EDGetTokenT<edm::View<pat::PackedGenParticle> > packedGenToken_;
 edm::EDGetTokenT<double> rhoToken_;
+
+
 TTree *electronTree_;
 // Vars for PVs
 Int_t pvNTracks_;
@@ -97,6 +101,33 @@ std::vector<Int_t> expectedMissingInnerHits_;
 std::vector<Int_t> passConversionVeto_;
 std::vector<Int_t> isTrueElectron_;
 std::vector<Int_t> isTrueElectronAlternative_;
+
+//all Photons Variables
+Int_t nPhotons_;
+std::vector<Float_t> phopt_;
+std::vector<Float_t> phoet_;
+std::vector<Float_t> phopx_;
+std::vector<Float_t> phopy_;
+std::vector<Float_t> phopz_;
+std::vector<Float_t> phosceta_;
+std::vector<Float_t> phoeta_;
+std::vector<Float_t> photheta_;
+std::vector<Float_t> phophi_;
+std::vector<Float_t> phosigmaietaieta_;
+std::vector<Float_t> phosigmaiphiiphi_;
+std::vector<Float_t> phohovere_;
+std::vector<Float_t> phoenergy_;
+std::vector<Float_t> phoSCenergy_;
+std::vector<Float_t> phoSCrawenergy_;
+std::vector<Float_t> phoSCeta_;
+std::vector<Float_t> phoSCphi_;
+std::vector<Float_t> phoSCetawidth_;
+std::vector<Float_t> phoSCphiwidth_;
+std::vector<Float_t> phoSCBrem_;
+std::vector<Float_t> phohasPixelSeed_;
+std::vector<Float_t> phoEleVeto_;
+std::vector<Float_t> r9_;
+
 };
 //
 // constants, enums and typedefs
@@ -111,6 +142,7 @@ ElectronNtuplerEventStructure::ElectronNtuplerEventStructure(const edm::Paramete
 vtxToken_(consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("vertices"))),
 pileupToken_(consumes<edm::View<PileupSummaryInfo> >(iConfig.getParameter<edm::InputTag>("pileup"))),
 electronToken_(consumes<pat::ElectronCollection>(iConfig.getParameter<edm::InputTag>("electrons"))),
+photonToken_(consumes<pat::PhotonCollection>(iConfig.getParameter<edm::InputTag>("photons"))),
 prunedGenToken_(consumes<edm::View<reco::GenParticle> >(iConfig.getParameter<edm::InputTag>("pruned"))),
 packedGenToken_(consumes<edm::View<pat::PackedGenParticle> >(iConfig.getParameter<edm::InputTag>("packed"))),
 rhoToken_(consumes<double> (iConfig.getParameter<edm::InputTag>("rho")))
@@ -143,6 +175,30 @@ electronTree_->Branch("expectedMissingInnerHits", &expectedMissingInnerHits_);
 electronTree_->Branch("passConversionVeto", &passConversionVeto_);
 electronTree_->Branch("isTrueElectron" , &isTrueElectron_);
 electronTree_->Branch("isTrueElectronAlternative" , &isTrueElectronAlternative_);
+//Photon Vraiables
+electronTree_->Branch("phopt" , &phopt_ );
+electronTree_->Branch("phoeta" , &phoeta_ );
+electronTree_->Branch("phoet" , &phoet_ );
+electronTree_->Branch("phopx" , &phopx_ );
+electronTree_->Branch("phopy" , &phopy_ );
+electronTree_->Branch("phopz" , &phopz_ );
+electronTree_->Branch("phosceta" , &phosceta_ );
+electronTree_->Branch("photheta" , &photheta_ );
+electronTree_->Branch("phophi" , &phophi_ );
+electronTree_->Branch("phosigmaietaieta" , &phosigmaietaieta_ );
+electronTree_->Branch("phosigmaiphiiphi" , &phosigmaiphiiphi_ );
+electronTree_->Branch("phohovere" , &phohovere_ );
+electronTree_->Branch("phoenergy" , &phoenergy_ );
+electronTree_->Branch("phoSCenergy" , &phoSCenergy_ );
+electronTree_->Branch("phoSCrawenergy" , &phoSCrawenergy_ );
+electronTree_->Branch("phoSCeta" , &phoSCeta_ );
+electronTree_->Branch("phoSCphi" , &phoSCphi_ );
+electronTree_->Branch("phoSCetawidth" , &phoSCetawidth_ );
+electronTree_->Branch("phoSCphiwidth" , &phoSCphiwidth_ );
+electronTree_->Branch("phoSCBrem" , &phoSCBrem_ );
+electronTree_->Branch("phohasPixelSeed" , &phohasPixelSeed_ );
+electronTree_->Branch("phoEleVeto" , &phoEleVeto_ );
+electronTree_->Branch("r9" , &r9_ );
 }
 ElectronNtuplerEventStructure::~ElectronNtuplerEventStructure()
 {
@@ -290,7 +346,49 @@ isTrueElectronAlternative_.push_back( matchToTruthAlternative( el ) );
 // Use this for debugging if needed, prints decay history.
 // Works with standard matching:
 // printAllZeroMothers( el.genParticle() );
-}
+ }
+
+//photon collection
+edm::Handle<pat::PhotonCollection> photons;
+iEvent.getByToken(photonToken_, photons);
+
+nPhotons_ = 0;
+phopt_.clear();
+phoeta_.clear();
+
+for (const pat::Photon &pho : *photons) {
+// Kinematics
+if (pho.pt() < 20 or pho.chargedHadronIso()/pho.pt() > 0.3) continue;
+nPhotons_++;
+phopt_.push_back( pho.pt() );
+phoeta_.push_back( pho.eta() );
+phophi_.push_back( pho.phi() );
+photheta_.push_back( pho.theta() );
+phoet_.push_back(pho.et());
+phoenergy_.push_back(pho.energy());
+phopx_.push_back(pho.px());
+phopy_.push_back(pho.py());
+phopz_.push_back(pho.pz());
+phosigmaietaieta_.push_back(pho.sigmaIetaIeta());
+phosigmaiphiiphi_.push_back(pho.spp());
+phohovere_.push_back(pho.hadTowOverEm());
+
+phosceta_.push_back(pho.superCluster()->eta());
+phoSCenergy_.push_back(pho.superCluster()->energy());
+phoSCrawenergy_.push_back(pho.superCluster()->rawEnergy());
+phoSCeta_.push_back(pho.superCluster()->eta());
+phoSCphi_.push_back(pho.superCluster()->phi());
+phoSCetawidth_.push_back(pho.superCluster()->etaWidth());
+phoSCphiwidth_.push_back(pho.superCluster()->phiWidth());
+phoSCBrem_.push_back(pho.superCluster()->phiWidth()/pho.superCluster()->etaWidth());
+phohasPixelSeed_.push_back(pho.hasPixelSeed());
+phoEleVeto_.push_back(pho.passElectronVeto());
+r9_.push_back(pho.r9());
+
+
+printf("phot with pt %4.1f, supercluster eta %+5.3f, sigmaIetaIeta %.3f (%.3f with full5x5 shower shapes)\n",
+	pho.pt(), pho.superCluster()->eta(), pho.sigmaIetaIeta(), pho.full5x5_sigmaIetaIeta());
+ }
 // Save this electron's info
 electronTree_->Fill();
 }
