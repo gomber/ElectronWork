@@ -12,7 +12,9 @@ Implementation:
 // Original Author: Ilya Kravchenko
 // Created: Thu, 10 Jul 2014 09:54:13 GMT
 //
-//
+//Modified for CMSDAS2015 by Lovedeep K. Saini (KSU) and Bhawna Gomber (UW)
+//Jan 2015
+////
 // system include files
 #include <memory>
 #include <vector>
@@ -355,6 +357,28 @@ iEvent.getByToken(photonToken_, photons);
 nPhotons_ = 0;
 phopt_.clear();
 phoeta_.clear();
+phoet_.clear();
+phopx_.clear();
+phopy_.clear();
+phopz_.clear();
+phosceta_.clear();
+phoeta_.clear();
+photheta_.clear();
+phophi_.clear();
+phosigmaietaieta_.clear();
+phosigmaiphiiphi_.clear();
+phohovere_.clear();
+phoenergy_.clear();
+phoSCenergy_.clear();
+phoSCrawenergy_.clear();
+phoSCeta_.clear();
+phoSCphi_.clear();
+phoSCetawidth_.clear();
+phoSCphiwidth_.clear();
+phoSCBrem_.clear();
+phohasPixelSeed_.clear();
+phoEleVeto_.clear();
+r9_.clear();
 
 for (const pat::Photon &pho : *photons) {
 // Kinematics
@@ -386,8 +410,8 @@ phoEleVeto_.push_back(pho.passElectronVeto());
 r9_.push_back(pho.r9());
 
 
-printf("phot with pt %4.1f, supercluster eta %+5.3f, sigmaIetaIeta %.3f (%.3f with full5x5 shower shapes)\n",
-	pho.pt(), pho.superCluster()->eta(), pho.sigmaIetaIeta(), pho.full5x5_sigmaIetaIeta());
+//printf("phot with pt %4.1f, supercluster eta %+5.3f, sigmaIetaIeta %.3f (%.3f with full5x5 shower shapes)\n",
+//	pho.pt(), pho.superCluster()->eta(), pho.sigmaIetaIeta(), pho.full5x5_sigmaIetaIeta());
  }
 // Save this electron's info
 electronTree_->Fill();
@@ -543,11 +567,11 @@ result = TRUE_ELECTRON_FROM_TAU;
 {
 // This is a true electron, but it comes from something else
 const reco::Candidate *mom = el.mother(0);
-int momPid = -999;
+//int momPid = -999;
 if ( mom != 0 )
-momPid = mom->pdgId();
-printf("pid= %d status= %d isFromZ= %d isFromW= %d isFromTau= %d momPid= %d\n",
-pid, status, isFromZ, isFromW, isFromTau, momPid);
+//momPid = mom->pdgId();
+//printf("pid= %d status= %d isFromZ= %d isFromW= %d isFromTau= %d momPid= %d\n",
+//pid, status, isFromZ, isFromW, isFromTau, momPid);
 result = TRUE_NON_PROMPT_ELECTRON;
 } else {
 printf("The reco electron has a truth match with pid= %d\n", pid);
