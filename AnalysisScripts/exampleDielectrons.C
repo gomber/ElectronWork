@@ -16,14 +16,13 @@
 //
 // 
 // Signal sample: DYToLL
-const TString fileNameSignal = "/home/hep/ikrav/releases-git/CMSSW_7_0_6_patch3/src/ElectronWork/ElectronNtupler/test/output.root";
+const TString fileNameSignal = "Tree_DY.root";
 // Background sample: TTbar
-const TString fileNameBackground = "/home/hep/ikrav/releases-git/CMSSW_7_0_6_patch3/src/ElectronWork/ElectronNtupler/test/output_TT.root";
+const TString fileNameBackground = "Tree_TT.root";
 
 const TString treeName = "ntupler/ElectronTree";
 
-const bool verbose = false;
-const bool smallEventCount = false;
+const bool smallEventCount = true;
 
 const float boundaryBarrelEndcap = 1.479;
 
@@ -34,11 +33,11 @@ enum TruthMatching {ELECTRON_FAKE, ELECTRON_TRUE_PROMPT,
 // Kinematics
 const float ptCut = 20; 
 // ID/ISO/etc selection
-const float cutIsoBarrel = 0.40;
-const float cutSeeBarrel = 0.12;
+const float cutIsoBarrel = 0.10;
+const float cutSeeBarrel = 0.01;
 
-const float cutIsoEndcap = 0.40;
-const float cutSeeEndcap = 0.35;
+const float cutIsoEndcap = 0.14;
+const float cutSeeEndcap = 0.03;
 
 // Other constants
 const double electronMass = 0.000511;
@@ -51,16 +50,11 @@ void setHistogramAttributes(TH1F *hist, TString XTitle);
 //
 
 void exampleDielectrons(){
-
-  // This statement below should not be needed, but in one particular node I had to
-  // add it, somehow the vector header was not loaded automatically there.
-  gROOT->ProcessLine("#include <vector>"); 
-
   // Book histograms
   TH1F *hDielectronMass = new TH1F("hDielectronMass","",60, 60, 120);
   TH1F *hDielectronMassCleaned = new TH1F("hDielectronMassCleaned","",
 					  60, 60, 120);
-
+  
   //
   // Open a file and find the tree with electron data
   //
@@ -88,17 +82,6 @@ void exampleDielectrons(){
   TTree *tree = TTree::MergeTrees(list);
   tree->SetName("mixDYandTT");
 
-  // 
-  // Configure reading the information of interest from the TTree,
-  // in this example we are working with events containing vectors.
-  // A good ROOT reference: 
-  //      http://root.cern.ch/root/html/tutorials/tree/hvector.C.html
-  //
-
-  // 
-  // Set up the branches of interest
-  //
-  // Declare variables
   //
   // Event-level variables:
   int nEle; // the number of reconstructed electrons in the event
@@ -132,21 +115,18 @@ void exampleDielectrons(){
   //
   UInt_t maxEvents = tree->GetEntries();
   if( smallEventCount )
-    maxEvents = 1000;
-  if(verbose)
-    printf("Start loop over events, total events = %lld\n", 
-	   tree->GetEntries() );
+    maxEvents = 20000;
   for(UInt_t ievent = 0; ievent < maxEvents; ievent++){
 
-    if( ievent%100000 == 0)
-      printf(".");
+    if( ievent%1000 == 0){
+      float perc = float(ievent)*100./float(maxEvents);
+      printf("Processed Events %i out of %i %.0f %%\n",int(ievent), int (maxEvents), perc);
+    }
     Long64_t tentry = tree->LoadTree(ievent);
-    
+        
     // Load the value of the number of the electrons in the event    
     b_nEle->GetEntry(tentry);
-    if(verbose)
-      printf("Event %d, number of electrons %u\n", ievent, nEle);
-    
+        
     // To construct dielectrons, we need at least two electrons
     // so skip the event if there are not enough electrons
     if( nEle < 2 ) 
@@ -241,7 +221,7 @@ void exampleDielectrons(){
   hDielectronMass->SetLineStyle(kDashed);
   hDielectronMass->Draw("hist");
   
-  hDielectronMassCleaned->Draw("same");
+  hDielectronMassCleaned->Draw("sames");
 
   TLegend *leg = new TLegend(0.12, 0.6, 0.55, 0.9);
   leg->AddEntry(hDielectronMass, "all pairs", "l");
@@ -260,7 +240,7 @@ void setHistogramAttributes(TH1F *hist, TString XTitle){
   hist->GetXaxis()->SetTitleSize(0.05);
   hist->GetXaxis()->SetTitle(XTitle);
 
-  hist->SetStats(0);
+  hist->SetStats(1);
 
   return;
 }
