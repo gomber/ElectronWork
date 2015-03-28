@@ -350,6 +350,8 @@ ElectronNtuplerEventStructure::analyze(const edm::Event& iEvent, const edm::Even
   //photon collection
   edm::Handle<pat::PhotonCollection> photons;
   iEvent.getByToken(photonToken_, photons);
+
+
   
   nPhotons_ = 0;
   phopt_.clear();
